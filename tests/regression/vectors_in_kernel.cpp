@@ -59,7 +59,25 @@ void multiplication(queue& Q, float* left, float* right, float* result, int N) {
 		});
 	});
 }
+
+void addition(queue& Q, float* left, float* right, float* result, int N) {
+	buffer<float, 1> buf_left(left, N);
+	buffer<float, 1> buf_right(right, N);
+	buffer<float, 1> buf_result(result, N);
+
+	Q.submit([&] (handler& cgh) {
+		auto acc_left = buf_left.get_access<access::mode::read>(cgh);
+		auto acc_right = buf_right.get_access<access::mode::read>(cgh);
+		auto acc_result = buf_result.get_access<access::mode::discard_write>(cgh);
+
+		cgh.parallel_for<class Matrix>(range<1>(N), [=] (id<1> index) {
+        acc_result[index] = acc_left[index] + acc_right[index];
+		});
+	});
+}
+
 void validate_matrix(float* left, float* right, float* result, int N);
+void validate_addition(float* left, float* right, float* result, int N);
 
 int main(int argc, char* argv[]) {
 
@@ -70,7 +88,7 @@ int main(int argc, char* argv[]) {
   int M = std::stoi(first, &first_pos);
   int epoch = std::stoi(second, &second_pos);
 
-  int N = M;
+  int N = 10000;
 
   float* left = generate(M, N, false);
   float* right = generate(M, N, false);
@@ -86,7 +104,7 @@ int main(int argc, char* argv[]) {
     auto start = clock();
     queue Q;
     auto end_warmup = clock();
-    multiplication(Q, left, right, result, M);
+    addition(Q, left, right, result, M*N);
     auto end_calculation = clock();
     std::cout << "*******[" << i << "]**********" << std::endl;
 
@@ -99,9 +117,32 @@ int main(int argc, char* argv[]) {
   std::cout << "time on calculation: " << calculation / epoch << std::endl;
   std::cout << "total on execution: " << total / epoch << std::endl;
 
-  validate_matrix(left, right, result, M);
+  validate_addition(left, right, result, M*N);
 
   return 0;
+}
+
+void validate_addition(float* left, float* right, float* result, int N) {
+		std::cout << "validating..." << std::endl;
+	int count = 0;
+
+	for (int i = 0; i < N; i++) {
+		float temp = left[i] + right[i];
+		
+		float diff = abs(temp - result[i]);
+
+		if (diff > 2e-7) {
+			count += 1;
+			std::cout << "error" << std::endl;
+		}
+	}
+
+	if (count == 0) {
+		std::cout << "successfully" <<std::endl;
+	} else {
+		std::cout << "someing wrong: " << count << std::endl;
+	}
+
 }
 
 void validate_matrix(float* left, float* right, float* result, int N) {

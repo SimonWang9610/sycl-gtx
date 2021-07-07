@@ -98,7 +98,7 @@ int main(int argc, char* argv[]) {
 	int M = std::stoi(first, &first_pos);
 	int epoch = std::stoi(second, &second_pos);
 
-	int N = M;
+	int N = 10000;
 
 	float* left = generate(M, N, false);
 	float* right = generate(M, N, false);
@@ -113,7 +113,7 @@ int main(int argc, char* argv[]) {
 	clock_t execution = 0;
 
 	for (int i = 0; i < epoch; i++) {
-		execute_multiplication(left, right, result, M, warmup, compilation, link, copy, calculation, execution);
+		execute_addition(left, right, result, M*N, warmup, compilation, link, copy, calculation, execution);
 		std::cout << "count[" << i << "]" << std::endl;
 	}
 
@@ -126,7 +126,7 @@ int main(int argc, char* argv[]) {
 	
 //	print(result, M, N);
 
-	validate_matrix(left, right, result, M);
+	validate_addition(left, right, result, M*N);
 
 	free(left);
 	free(right);
@@ -142,7 +142,9 @@ void validate_addition(float* left, float* right, float* result, int N) {
 	for (int i = 0; i < N; i++) {
 		float temp = left[i] + right[i];
 		
-		if (temp != result[i]) {
+		float diff = abs(temp - result[i]);
+
+		if (diff > 2e-7) {
 			count += 1;
 			std::cout << "error" << std::endl;
 		}

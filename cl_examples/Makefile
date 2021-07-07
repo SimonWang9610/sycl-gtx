@@ -2,8 +2,8 @@ CXX = g++
 
 all: cl cl.o clean
 
-LIBS += -L/usr/local/cuda/lib64 -lOpenCL
-INCLUDES += -I/usr/local/cuda/include
+LIBS += -L/usr/lib/x86_64-linux-gnu -lOpenCL
+INCLUDES += -I/usr/include
 
 cl: cl.o
 	${CXX} -o cl cl.o ${LIBS}

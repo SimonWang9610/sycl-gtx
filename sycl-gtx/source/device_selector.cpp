@@ -11,6 +11,8 @@ device device_selector::select_device(vector_class<device> devices) const {
   int i = 0;
 
   for (auto& dev : devices) {
+    // debug() << "current best_id: " << best_id;
+    // debug() << dev.get_info<info::device::vendor>();
     int score = operator()(dev);
     if (score > best_score) {
       best_id = i;

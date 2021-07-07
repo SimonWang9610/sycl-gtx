@@ -1,59 +1,133 @@
 #include "../common.h"
 
-// Test vectors in kernel
+#include <stdlib.h>
+#include <time.h>
+#include <stdio.h>
+#include <stdexcept>
+#include <string>
 
-// Originally test10
+using namespace cl::sycl;
+class Matrix;
 
-#include <sstream>
+float* generate(int row, int col, bool tag) {
 
-template <class T>
-std::string to_string(const T& t) {
-  std::stringstream s;
-  s << '(' << t.x() << ',' << t.y() << ',' << t.z() << ')';
-  return s.str();
+	float* arr = (float*)malloc(row * col * sizeof(float));
+
+	int total = row * col;
+	srand(time(NULL));
+
+	for (int i = 0; i < total; i++) {
+
+		if (tag) {
+			arr[i] = 0;
+		} else {
+			arr[i] = (float) rand() / RAND_MAX * 0.01;
+		}
+	}
+	return arr;
 }
 
-int main() {
-  using namespace cl::sycl;
-  using namespace std;
-
-  cpu_selector cpu;
-  queue myQueue(cpu);
-
-  const int size = 10;
-  cl::sycl::cl_float3 testVector;
-  testVector.x() = 1;
-  testVector.y() = 2;
-  testVector.z() = 3;
-  buffer<float3> vectors(size);
-
-  myQueue.submit([&](handler& cgh) {
-    auto v = vectors.get_access<access::mode::discard_write>(cgh);
-
-    cgh.parallel_for<class addition>(range<1>(size), [=](id<> i) {
-      v[i] = float3(testVector.x(), testVector.y(), 0);
-      v[i].z() = testVector.z();
-    });
-  });
-
-  auto v =
-      vectors.get_access<access::mode::read, access::target::host_buffer>();
-
-  auto floatEqual = [](float& first, float& second) {
-    static const double eps = 1e-5f;
-    return first > second - eps && first < second + eps;
-  };
-
-  for (auto i = 0; i < size; ++i) {
-    auto vi = v[i];
-    if (!floatEqual(vi.x(), testVector.x()) ||
-        !floatEqual(vi.y(), testVector.y()) ||
-        !floatEqual(vi.z(), testVector.z())) {
-      cout << i << " -> expected " << to_string(testVector) << ", got "
-           << to_string(vi) << endl;
-      return 1;
+void print(float* arr, int row, int col) {
+  for (int i = 0; i < row; i++) {
+    for (int j = 0; j < col; j++) {
+      std::cout << arr[i * col + j] << " ";
     }
+    std::cout << std::endl;
   }
+  std::cout << "----------------" << std::endl;
+}
+
+void multiplication(queue& Q, float* left, float* right, float* result, int N) {
+	buffer<float, 1> buf_left(left, N * N);
+	buffer<float, 1> buf_right(right, N * N);
+	buffer<float, 2> buf_result(result, range<2>(N, N));
+
+	Q.submit([&] (handler& cgh) {
+		auto acc_left = buf_left.get_access<access::mode::read>(cgh);
+		auto acc_right = buf_right.get_access<access::mode::read>(cgh);
+		auto acc_result = buf_result.get_access<access::mode::discard_write>(cgh);
+
+		cgh.parallel_for<class Matrix>(range<2>(N, N), [=] (id<2> index) {
+      int1 row = index[0];
+      int1 col = index[1];
+      float1 temp = 0.;
+      SYCL_FOR(int1 i = 0, i < N, i++) {
+        temp += acc_left[row * N + i] * acc_right[i * N + col];
+      }
+      SYCL_END;
+      acc_result[index] = temp;
+		});
+	});
+}
+void validate_matrix(float* left, float* right, float* result, int N);
+
+int main(int argc, char* argv[]) {
+
+  std::string first = argv[1];
+  std::string second = argv[2];
+  size_t first_pos, second_pos;
+
+  int M = std::stoi(first, &first_pos);
+  int epoch = std::stoi(second, &second_pos);
+
+  int N = M;
+
+  float* left = generate(M, N, false);
+  float* right = generate(M, N, false);
+  float* result = generate(M, N, true);
+
+  std::cout << "generated data" << std::endl;
+
+  clock_t total = 0;
+  clock_t warmup = 0;
+  clock_t calculation = 0;
+
+  for (int i = 0; i < epoch; i++) {
+    auto start = clock();
+    queue Q;
+    auto end_warmup = clock();
+    multiplication(Q, left, right, result, M);
+    auto end_calculation = clock();
+    std::cout << "*******[" << i << "]**********" << std::endl;
+
+    warmup += end_warmup - start;
+    calculation += end_calculation - end_warmup;
+    total += end_calculation - start;
+  }
+  
+  std::cout << "time on warmup: " << warmup / epoch << std::endl;
+  std::cout << "time on calculation: " << calculation / epoch << std::endl;
+  std::cout << "total on execution: " << total / epoch << std::endl;
+
+  validate_matrix(left, right, result, M);
 
   return 0;
+}
+
+void validate_matrix(float* left, float* right, float* result, int N) {
+  std::cout << "validating..." << std::endl;
+  int count = 0;
+
+	for (int i = 0; i < N; i++) {
+		for (int j = 0; j < N; j++) {
+			float temp = 0;
+
+			for (int k = 0; k < N; k++) {
+				temp += left[i * N + k] * right[k * N + j];
+			}
+      // std::cout << temp << " ";
+			float diff = abs(temp - result[j * N + i]);
+			if (diff > 2e-7) {
+        count += 1;
+				std::cout << diff << std::endl;
+			}
+		}
+    // std::cout << std::endl;
+	}
+
+  if (count == 0) {
+    std::cout << "successfully" << std::endl;
+  } else {
+    std::cout << "something wrong: " << count << std::endl;
+  }
 }

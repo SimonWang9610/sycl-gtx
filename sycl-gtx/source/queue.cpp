@@ -18,9 +18,9 @@ void queue::display_device_info() const {
 cl_command_queue queue::create_queue(bool display_info,
                                      bool register_with_synchronizer,
                                      info::queue_profiling enable_profiling) {
-  if (display_info) {
-    display_device_info();
-  }
+  // if (display_info) {
+  //   display_device_info();
+  // }
 
   ::cl_int error_code;
   auto q = clCreateCommandQueue(
@@ -40,6 +40,7 @@ queue::queue(const async_handler& asyncHandler)
       dev(ctx.get_devices()[0]),
       command_q(create_queue()),
       command_group(this) {
+  //  debug() << "@queue(async_handler)";
   command_q.release_one();
 }
 
@@ -49,6 +50,7 @@ queue::queue(const device_selector& deviceSelector,
       dev(ctx.get_devices()[0]),
       command_q(create_queue()),
       command_group(this) {
+  // debug() << "@queue(device_selector, async_handler)";
   command_q.release_one();
 }
 
@@ -61,12 +63,15 @@ queue::queue(const context& syclContext, const device_selector& deviceSelector,
       dev(deviceSelector.select_device(ctx.get_devices())),
       command_q(create_queue()),
       command_group(this) {
+  // debug() << "@queue(context, device_selector, async_handler)";
   command_q.release_one();
 }
 
 queue::queue(const context& syclContext, const device& syclDevice,
              const async_handler& asyncHandler)
-    : queue(syclContext, syclDevice, false, asyncHandler) {}
+    : queue(syclContext, syclDevice, false, asyncHandler) {
+  // debug() << "@queue(context, device, async_handler)";
+}
 
 /** Chooses a device based on the provided device selector in the given context.
  */
@@ -77,6 +82,8 @@ queue::queue(const context& syclContext, const device& syclDevice,
       dev(syclDevice),
       command_q(create_queue(profilingFlag)),
       command_group(this) {
+  // debug() << "@queue(context, device, flag, async_handler)";
+
   command_q.release_one();
 }
 
@@ -171,18 +178,22 @@ void queue::wait_subqueues(bool and_throw) {
 }
 
 handler_event queue::process(buffer_set& buffers_in_use_master) {
+  //  std::cout << "start processing..." << std::endl;
   if (is_flushed ||
       !detail::synchronizer::can_flush(command_group.read_buffers) ||
       !detail::synchronizer::can_flush(command_group.write_buffers)) {
     // TODO(progtx):
     return handler_event();
   }
+
   command_group.optimize();
   command_group.flush(
       get_wait_events(command_group.read_buffers, buffers_in_use_master));
   buffers_in_use_master.insert(command_group.write_buffers.begin(),
                                command_group.write_buffers.end());
   is_flushed = true;
+  //  std::cout << "ending..." << std::endl;
+
   return handler_event();
 }
 

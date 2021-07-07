@@ -4,9 +4,34 @@
 // (slightly revised from revision 2014-09-16 of the specification)
 
 // Originally test8
+using namespace cl::sycl;
+
+class my_selector : public device_selector {
+ public:
+  int operator()(const device& dev) const {
+    int score = -1;
+    if (dev.is_gpu()) {
+      auto vendor = dev.get_info<info::device::vendor>();
+      debug() << vendor;
+
+      if (vendor.find("NVIDIA") != std::string::npos) {
+        score += 2;
+      } else {
+        score += 1;
+      }
+    }
+    return score;
+  }
+};
 
 int main() {
-  using namespace cl::sycl;
+  auto plts = platform::get_platforms();
+  for (auto const& plt : plts) {
+    for (auto const& dev : plt.get_devices(info::device_type::gpu)) {
+      debug() << "Device name: ";
+      debug() << dev.get_info<info::device::name>();
+    }
+  }
 
   static const int size = 1024;
   int data[size];  // Initialize data to be worked on
@@ -19,8 +44,10 @@ int main() {
   // By including all the SYCL work in a {} block, we ensure
   // all SYCL tasks must complete before exiting the block
   {
+    my_selector nvidia;
+
     // create a queue to enqueue work to
-    queue myQueue;
+    queue myQueue(nvidia);
 
     // wrap our data variable in a buffer
     buffer<int, 1> resultBuf(data, size);

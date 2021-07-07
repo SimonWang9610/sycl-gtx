@@ -11,9 +11,12 @@ context::context(cl_context c, const async_handler& asyncHandler,
                  const device_selector& deviceSelector)
     : ctx(c), target_devices(deviceList), asyncHandler(asyncHandler) {
   if (c == nullptr) {
+    //    debug() << "context creating";
     cl_uint num_devices = static_cast<::cl_uint>(target_devices.size());
 
     if (num_devices == 0) {
+      //      debug() << "context-> num devices == 0";
+
       target_devices =
           device_selector::get_platform().get_devices(deviceSelector.type);
       num_devices = static_cast<::cl_uint>(target_devices.size());
@@ -41,7 +44,9 @@ context::context() : context(nullptr, detail::default_async_handler, false) {}
  * for handling asynchronous errors.
  */
 context::context(const async_handler& asyncHandler)
-    : context(nullptr, asyncHandler, false) {}
+    : context(nullptr, asyncHandler, false) {
+  // debug() << "@context(async_handler)";
+}
 
 /** Executes a retain on the cl_context */
 context::context(cl_context clContext, const async_handler& asyncHandler)

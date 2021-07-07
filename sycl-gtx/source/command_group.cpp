@@ -18,7 +18,8 @@ void command_group::exit() {
 
 // TODO(progtx): Reschedules commands to achieve better performance
 void command_group::optimize() {
-  DSELF();
+  // std::cout << "optimize()" << std::endl;
+  // DSELF();
 
   auto size_to_keep = commands.size();
   std::map<command_t*, bool> keep;
@@ -89,23 +90,24 @@ void command_group::optimize() {
 
 /** Executes all commands in queue and removes them */
 void command_group::flush(vector_class<cl_event> wait_events) {
-  DSELF() << q << q->get();
+  // std::cout << "command group::flush()" << std::endl;
+  // DSELF() << q << q->get();
 
   using detail::command::type_t;
 
   for (auto& command : commands) {
-    if (command.type == type_t::get_accessor) {
-      auto& acc = command.data.buf_acc;
-      auto d = debug();
-      d << command.type << acc.data << acc.mode << acc.target;
-    } else if (command.type == type_t::copy_data) {
-      auto& copy = command.data.buf_copy;
-      auto d = debug();
-      d << command.type << copy.buf.data << copy.buf.mode << copy.buf.target
-        << copy.mode;
-    } else {
-      debug() << "command:" << command.name;
-    }
+    // if (command.type == type_t::get_accessor) {
+    //   auto& acc = command.data.buf_acc;
+    //   auto d = debug();
+    //   d << command.type << acc.data << acc.mode << acc.target;
+    // } else if (command.type == type_t::copy_data) {
+    //   auto& copy = command.data.buf_copy;
+    //   auto d = debug();
+    //   d << command.type << copy.buf.data << copy.buf.mode << copy.buf.target
+    //     << copy.mode;
+    // } else {
+    //   debug() << "command:" << command.name;
+    // }
     command.function(q, wait_events);
   }
   commands.clear();

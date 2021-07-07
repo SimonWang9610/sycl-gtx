@@ -54,6 +54,7 @@ class issue_command {
   static void enqueue_range(shared_ptr_class<kernel> kern, event* evnt,
                             range<dimensions> num_work_items,
                             id<dimensions> offset) {
+    //    std::cout << "enqueue range()" << std::endl;
     command::group_detail::add_kernel_enqueue_range(
         enqueue_range_command, __func__, kern, evnt, num_work_items, offset);
   }

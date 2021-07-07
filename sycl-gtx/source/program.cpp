@@ -3,6 +3,7 @@
 #include "SYCL/detail/debug.h"
 #include "SYCL/kernel.h"
 #include "SYCL/queue.h"
+#include <time.h>
 
 using namespace cl::sycl;
 
@@ -25,12 +26,14 @@ void program::compile(string_class compile_options, ::size_t kernel_name_id,
   auto& src = kern->src;
   auto code = src.get_code();
 
-  debug() << "Compiled kernel:";
-  debug() << code;
+  // debug() << "Compiled kernel:";
+  // debug() << code;
 
   const char* code_p = code.c_str();
   ::size_t length = code.size();
   ::cl_int error_code;
+
+  auto start = clock();
 
   auto p =
       clCreateProgramWithSource(ctx.get(), 1, &code_p, &length, &error_code);
@@ -45,6 +48,8 @@ void program::compile(string_class compile_options, ::size_t kernel_name_id,
                                 device_pointers.data(), compile_options.c_str(),
                                 0, nullptr, nullptr, nullptr, nullptr);
 
+  auto end_compile = clock();
+  std::cout << "compiler[" << end_compile - start << "], ";
   try {
     detail::error::report(error_code);
   } catch (::cl::sycl::exception& e) {
@@ -108,6 +113,8 @@ void program::link(string_class linking_options) {
   auto program_pointers = get_program_pointers();
   ::cl_int error_code;
 
+  auto start = clock();
+
   prog =
       clLinkProgram(ctx.get(), static_cast<::cl_uint>(device_pointers.size()),
                     device_pointers.data(), linking_options.c_str(),
@@ -118,5 +125,8 @@ void program::link(string_class linking_options) {
   // Can only initialize after program successfully built
   init_kernels();
 
+  auto end_link = clock();
+
+  std::cout << ", link[" << end_link - start << "]" << std::endl;
   linked = true;
 }

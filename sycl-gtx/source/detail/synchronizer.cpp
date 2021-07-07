@@ -35,7 +35,7 @@ void synchronizer::remove(queue* q) {
 }
 
 void synchronizer::add(accessor_base* acc, buffer_base* buf) {
-  DSELF() << acc << buf;
+  //  DSELF() << acc << buf;
   host_accessors.emplace(acc, buf);
   wait_on_queues(buf);
 }
@@ -47,20 +47,20 @@ void synchronizer::remove(accessor_base* acc, buffer_base* buf) {
 
 bool synchronizer::can_flush(
     const std::set<detail::buffer_base*>& buffers_in_use) {
-  {
-    auto d = DSELF();
-    d << "buffers_in_use";
-    for (auto& buf : buffers_in_use) {
-      d << buf;
-    }
-  }
-  {
-    auto d = DSELF();
-    d << "host_accessors";
-    for (auto&& acc : host_accessors) {
-      d << "{" << acc.first << acc.second << "}";
-    }
-  }
+  // {
+  //   auto d = DSELF();
+  //   d << "buffers_in_use";
+  //   for (auto& buf : buffers_in_use) {
+  //     d << buf;
+  //   }
+  // }
+  // {
+  //   auto d = DSELF();
+  //   d << "host_accessors";
+  //   for (auto&& acc : host_accessors) {
+  //     d << "{" << acc.first << acc.second << "}";
+  //   }
+  // }
   for (auto&& acc : host_accessors) {
     if (buffers_in_use.count(acc.second) > 0) {
       return false;

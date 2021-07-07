@@ -21,9 +21,15 @@ int main() {
   {  // By including all the SYCL work in a {} block,
     // we ensure all SYCL tasks must complete before exiting the block
 
+    auto selector = default_selector();
+    std::cout << "device selector" << std::endl;
+    auto dev = selector.select_device();
+    std::cout << dev.get_info<info::device::name>() << std::endl;
+
     // Create a queue to work on
     queue myQueue;
 
+    std::cout << "create queue" << std::endl;
     // Create some 2D buffers of float for our matrices
     buffer<float, 2> a(range<2>(N, M));
     buffer<float, 2> b(range<2>(N, M));

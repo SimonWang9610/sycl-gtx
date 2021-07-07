@@ -161,6 +161,7 @@ class group_detail {
 
   template <type_t type = type_t::unspecified, class F, class... Args>
   static void add_command(F function, string_class name, Args... params) {
+    //    std::cout << "add command" << std::endl;
     last->commands.push_back({name,
                               std::bind(function, std::placeholders::_1,
                                         std::placeholders::_2, params...),
@@ -179,6 +180,7 @@ class group_detail {
       kern_fn<range<dimensions>, id<dimensions>> function, string_class name,
       shared_ptr_class<kernel> kern, event* evnt,
       range<dimensions> num_work_items, id<dimensions> offset) {
+    //    std::cout << "add kernel enqueue range" << std::endl;
     add_command(function, name, kern, evnt, num_work_items, offset);
   }
 

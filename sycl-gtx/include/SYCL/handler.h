@@ -9,6 +9,7 @@
 #include "SYCL/handler_event.h"
 #include "SYCL/program.h"
 #include "SYCL/ranges.h"
+#include <time.h>
 
 namespace cl {
 namespace sycl {
@@ -62,7 +63,20 @@ class handler {
   void parallel_for_range(range<dimensions> numWorkItems,
                           id<dimensions> workItemOffset,
                           KernelType kernFunctor) {
+    // create program with soruce
+    // compile program
+    // link programs
+    // create kernels
+    auto start = clock();
+
     auto kern = build(kernFunctor);
+
+    auto end_build = clock();
+    std::cout << "totla compilation: " << end_build - start << std::endl;
+    // enqueue write buffer
+    // set kernel args
+    // enqueueNDRange kernel
+    // enqueue read buffer
     issue_enqueue(kern, &issue::enqueue_range, numWorkItems, workItemOffset);
   }
   // TODO(progtx): Why is the offset needed? It's already contained in the

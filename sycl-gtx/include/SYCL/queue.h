@@ -166,6 +166,7 @@ class queue {
   // TODO(progtx):
   template <typename T>
   handler_event submit(T cgf) {
+    std::cout << "start submitting" << std::endl;
     subqueues.push_back({this, cgf});
     return subqueues.back().process(buffers_in_use);
   }

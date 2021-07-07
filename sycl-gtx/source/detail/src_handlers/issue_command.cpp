@@ -15,7 +15,7 @@ void issue_command::compile_command(queue* q,
 }
 
 void issue_command::prepare_kernel(shared_ptr_class<kernel> kern) {
-  DSELF() << kern->src.kernel_name;
+  //  DSELF() << kern->src.kernel_name;
   auto k = kern->get();
   ::cl_int error_code;
   int i = 0;
@@ -32,6 +32,7 @@ void issue_command::prepare_kernel(shared_ptr_class<kernel> kern) {
 }
 
 void issue_command::write_buffers_to_device(shared_ptr_class<kernel> kern) {
+  //  std::cout << "write buffer to device" << std::endl;
   for (auto& acc : kern->src.resources) {
     auto mode = acc.second.acc.mode;
     if (mode == access::mode::write || mode == access::mode::discard_write ||

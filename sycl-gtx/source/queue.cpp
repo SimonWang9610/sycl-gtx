@@ -145,14 +145,22 @@ void queue::throw_asynchronous() {
 }
 
 void queue::wait() {
+  auto start = clock();
   finish();
   wait_subqueues(false);
+  auto end_execution = clock();
+  execution = end_execution - start;
 }
 
 void queue::wait_and_throw() {
   finish();
   wait_subqueues(true);
   throw_asynchronous();
+}
+
+void queue::stats() {
+  std::cout << "execution[" << execution << "]"
+            << std::endl;
 }
 
 void queue::flush() {
@@ -188,12 +196,14 @@ handler_event queue::process(buffer_set& buffers_in_use_master) {
   }
 
   command_group.optimize();
+
   command_group.flush(
       get_wait_events(command_group.read_buffers, buffers_in_use_master));
+  
   buffers_in_use_master.insert(command_group.write_buffers.begin(),
                                command_group.write_buffers.end());
+                  
   is_flushed = true;
-  //  std::cout << "ending..." << std::endl;
 
   return handler_event();
 }

@@ -59,10 +59,8 @@ void multiplication(queue& Q, float* left, float* right, float* result, int N) {
 		});
 	});
 
-  auto start = clock();
   Q.wait();
-  auto end_calculation = clock();
-  std::cout << "computation: " << end_calculation - start << std::endl;
+  Q.stats();
 }
 
 void addition(queue& Q, float* left, float* right, float* result, int N) {
@@ -70,15 +68,18 @@ void addition(queue& Q, float* left, float* right, float* result, int N) {
 	buffer<float, 1> buf_right(right, N);
 	buffer<float, 1> buf_result(result, N);
 
-	Q.submit([&] (handler& cgh) {
-		auto acc_left = buf_left.get_access<access::mode::read>(cgh);
-		auto acc_right = buf_right.get_access<access::mode::read>(cgh);
-		auto acc_result = buf_result.get_access<access::mode::discard_write>(cgh);
+  Q.submit([&](handler& cgh) {
+    auto acc_left = buf_left.get_access<access::mode::read>(cgh);
+    auto acc_right = buf_right.get_access<access::mode::read>(cgh);
+    auto acc_result = buf_result.get_access<access::mode::discard_write>(cgh);
 
-		cgh.parallel_for<class Matrix>(range<1>(N), [=] (id<1> index) {
-        acc_result[index] = acc_left[index] + acc_right[index];
-		});
-	});
+    cgh.parallel_for<class Matrix>(range<1>(N), [=](id<1> index) {
+      acc_result[index] = acc_left[index] + acc_right[index];
+    });
+  });
+
+  Q.wait();
+  Q.stats();
 }
 
 void validate_matrix(float* left, float* right, float* result, int N);

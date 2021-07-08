@@ -67,12 +67,12 @@ class handler {
     // compile program
     // link programs
     // create kernels
-    auto start = clock();
+    // auto start = clock();
 
     auto kern = build(kernFunctor);
 
-    auto end_build = clock();
-    std::cout << "totla compilation: " << end_build - start << std::endl;
+    // auto end_build = clock();
+    // std::cout << "totla compilation: " << end_build - start << std::endl;
     // enqueue write buffer
     // set kernel args
     // enqueueNDRange kernel

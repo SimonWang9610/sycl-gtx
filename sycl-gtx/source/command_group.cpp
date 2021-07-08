@@ -4,6 +4,7 @@
 #include "SYCL/buffer.h"
 #include "SYCL/queue.h"
 #include <map>
+#include <time.h>
 #include <unordered_set>
 
 using namespace cl::sycl;
@@ -95,6 +96,8 @@ void command_group::flush(vector_class<cl_event> wait_events) {
 
   using detail::command::type_t;
 
+  auto start = clock();
+
   for (auto& command : commands) {
     // if (command.type == type_t::get_accessor) {
     //   auto& acc = command.data.buf_acc;
@@ -113,6 +116,9 @@ void command_group::flush(vector_class<cl_event> wait_events) {
   commands.clear();
 
   auto error = clFlush(q->get());
+
+  auto end_copy = clock();
+  std::cout << "time on copy: " << end_copy - start << std::endl;
   detail::error::report(error);
 }
 

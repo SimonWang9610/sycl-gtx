@@ -1,6 +1,7 @@
 #include "SYCL/queue.h"
 
 #include "SYCL/buffer_base.h"
+#include <time.h>
 
 using namespace cl::sycl;
 

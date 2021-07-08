@@ -58,6 +58,11 @@ void multiplication(queue& Q, float* left, float* right, float* result, int N) {
       acc_result[index] = temp;
 		});
 	});
+
+  auto start = clock();
+  Q.wait();
+  auto end_calculation = clock();
+  std::cout << "computation: " << end_calculation - start << std::endl;
 }
 void validate_matrix(float* left, float* right, float* result, int N);
 

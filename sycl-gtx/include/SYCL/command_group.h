@@ -142,6 +142,7 @@ class command_group {
 
   void optimize();
   void flush(vector_class<cl_event> wait_events);
+
 };
 
 namespace command {

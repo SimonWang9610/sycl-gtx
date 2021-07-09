@@ -41,8 +41,8 @@ class handler {
   shared_ptr_class<kernel> build(KernelType kernFunctor) {
     detail::command::group_detail::check_scope();
     program prog(get_context(q));
-    prog.build(kernFunctor, "");
-
+    // prog.build(kernFunctor, "");
+    prog.build_one(kernFunctor, "");
     // We know here the program only contains one kernel
     return prog.kernels.begin()->second;
   }
@@ -71,12 +71,7 @@ class handler {
 
     auto kern = build(kernFunctor);
 
-    // auto end_build = clock();
-    // std::cout << "totla compilation: " << end_build - start << std::endl;
-    // enqueue write buffer
-    // set kernel args
-    // enqueueNDRange kernel
-    // enqueue read buffer
+    q->set_point();
     issue_enqueue(kern, &issue::enqueue_range, numWorkItems, workItemOffset);
   }
   // TODO(progtx): Why is the offset needed? It's already contained in the

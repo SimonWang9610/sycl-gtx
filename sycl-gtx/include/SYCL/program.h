@@ -44,6 +44,10 @@ class program {
 
   void compile(string_class compile_options, ::size_t kernel_name_id,
                shared_ptr_class<kernel> kern);
+
+  void compile_one(string_class compile_options, ::size_t kernel_name_id,
+               shared_ptr_class<kernel> kern);
+
   void report_compile_error(shared_ptr_class<kernel> kern, device& dev) const;
 
   template <class KernelType>
@@ -52,13 +56,20 @@ class program {
         typename detail::first_arg<KernelType>::type>::get(kernFunctor);
     auto kern = shared_ptr_class<kernel>(new kernel(true));
     kern->src = std::move(src);
-    compile(compile_options, detail::kernel_name::get<KernelType>(), kern);
+    // compile(compile_options, detail::kernel_name::get<KernelType>(), kern);
+    compile_one(compile_options, detail::kernel_name::get<KernelType>(), kern);
   }
+
 
   template <class KernelType>
   void build(KernelType kernFunctor, string_class compile_options = "") {
     compile(kernFunctor, compile_options);
     link();
+  }
+
+  template <class KernelType>
+  void build_one(KernelType kernFunctor, string_class compile_options = "") {
+    compile(kernFunctor, compile_options);
   }
 
  public:

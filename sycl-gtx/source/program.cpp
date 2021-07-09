@@ -62,6 +62,43 @@ void program::compile(string_class compile_options, ::size_t kernel_name_id,
   }
 }
 
+void program::compile_one(string_class compile_options, ::size_t kernel_name_id,
+                      shared_ptr_class<kernel> kern) {
+    kernels.emplace(kernel_name_id, kern);
+    auto& src = kern->src;
+    auto code = src.get_code();
+
+    debug() << "Compiled kernel:";
+    debug() << code;
+
+    const char* code_p = code.c_str();
+    ::size_t length = code.size();
+    ::cl_int error_code;
+
+    auto start = clock();
+
+    auto p =
+      clCreateProgramWithSource(ctx.get(), 1, &code_p, &length, &error_code);
+    detail::error::report(error_code);
+    kern->set(ctx, p);
+    kern->prog->prog.release_one();
+
+    auto device_pointers = detail::get_cl_array(devices);
+    auto program_pointers = get_program_pointers();
+    error_code = clBuildProgram(*program_pointers.data(), 1, device_pointers.data(),
+                       compile_options.c_str(), nullptr, nullptr);
+    detail::error::report(error_code);
+
+    prog = *get_program_pointers().data();
+    std::cout << " build: " << error_code << std::endl;
+    init_kernels();
+    linked = true;
+
+    auto end_compile = clock() - start;
+    std::cout << "compile[" << end_compile << "]" <<std::endl;
+}
+
+
 void program::report_compile_error(shared_ptr_class<kernel> kern,
                                    device& dev) const {
   // http://stackoverflow.com/a/9467325/793006

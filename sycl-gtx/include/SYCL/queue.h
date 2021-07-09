@@ -31,7 +31,11 @@ class queue {
   exception_list ex_list;
   detail::command_group command_group;
   buffer_set buffers_in_use;
+
   clock_t execution;
+  clock_t copy = 0;
+  clock_t anchor;
+
   bool is_flushed = true;
   vector_class<queue> subqueues;
 
@@ -164,7 +168,9 @@ class queue {
    */
   void wait_and_throw();
 
-  void stats();
+  void set_point() {
+	  anchor = clock();
+  }
 
   // TODO(progtx):
   template <typename T>
